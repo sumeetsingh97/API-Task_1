@@ -1,0 +1,33 @@
+{
+  "name": "api_task-1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "make-seed": "npx knex seed:make seed_roles --knexfile ./src/config/knexfile.js",
+    "migrate": "knex migrate:latest --knexfile ./src/config/knexfile.js",
+    "seed": "knex seed:run --knexfile ./src/config/knexfile.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-joi-validation": "^5.0.1",
+    "joi": "^17.13.1",
+    "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
+    "knex": "^3.1.0",
+    "objection": "^3.1.4",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

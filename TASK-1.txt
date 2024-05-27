@@ -1,0 +1,6 @@
+-> CRUD and (Register, Login, Logout)
+-> use JWT
+-> ROLES: Admin, User, IT role
+-> (use bool is_active = false to delete the user)
+-> Roles and Users table should be connected
+-> Follow MVC file structure
