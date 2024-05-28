@@ -4,3 +4,8 @@
 -> (use bool is_active = false to delete the user)
 -> Roles and Users table should be connected
 -> Follow MVC file structure
+
+-> use middlewares
+
+-> login separately for the admin no user should be able to login
+-> is_active should remain false if user is deleted

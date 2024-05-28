@@ -33,15 +33,13 @@ exports.login = async (req, res) => {
         const existingUser = await Users.query().findOne({ email });
         if(!existingUser)
             return res.status(400).send(errorMessage.invalidLogin);
+
+        if(!existingUser.is_active)
+            return res.status(400).send(errorMessage.userIsBlocked);
         
         const validUser = await bcrypt.compare(password, existingUser.password);
         if(!validUser) 
             return res.status(400).send(errorMessage.passwordNotMatched);
-
-        if (existingUser.is_active === false) {
-            // return res.status(400).send(errorMessage.userIsBlocked);
-            await Users.query().where({email}).update({is_active: true});
-        }
         
         const token = await jwt.sign(
             { 
@@ -77,14 +75,10 @@ exports.updateData = async (req, res) => {
 }
 
 exports.logout = async (req, res) => {
-    const { id } = req.user;
+    // const { id } = req.user;
     try {
-        const existingUser = await Users.query().where({ id: id }).first();
-        if(!existingUser)
-            res.status(404).send(errorMessage.userDoNotExist);
-
-        const user = await Users.query().patchAndFetchById(id, {is_active: false});
-        res.status(200).json({ message: "User logged out successfully!", user });
+        // req.logout();
+        res.status(200).send("User Logged out successfully!");
     } catch (error) {
         res.status(400).send(errorMessage.logoutIssue);
     }

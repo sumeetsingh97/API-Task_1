@@ -2,6 +2,7 @@ require('dotenv').config({ path: '../../.env' });
 const bcrypt = require('bcrypt');
 const Users = require('../models/userModel');
 const jwt = require('./../helpers/jwt');
+require('../helpers/passport');
 // const jwt = require('jsonwebtoken');
 const errorMessage = require('../helpers/errorMessages');
 
@@ -11,14 +12,16 @@ exports.login = async (req, res) => {
         const existingUser = await Users.query().findOne({ email });
         if(!existingUser)
             return res.status(400).send(errorMessage.invalidLogin);
+
+        if (existingUser.role_id !== 1)
+            return res.status(400).send(errorMessage.forbidden);
+
+        if(!existingUser.is_active)
+            return res.status(400).send(errorMessage.userIsBlocked);
         
         const validUser = await bcrypt.compare(password, existingUser.password);
         if(!validUser) 
             return res.status(400).send(errorMessage.passwordNotMatched);
-
-        if (existingUser.is_active === false) {
-            await Users.query().where({email}).update({is_active: true});
-        }
         
         const token = await jwt.sign(
             {
@@ -75,19 +78,6 @@ exports.updateUserById = async (req, res) => {
     }
 }
 
-exports.deleteUser = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const existingUser = await Users.query().where({ id: id }).first();
-        if(!existingUser)
-            res.status(404).send(errorMessage.userDoNotExist);
-        await Users.query().deleteById(id);
-        res.status(200).send("User deleted successfully");
-    } catch (error) {
-        res.status(400).send(errorMessage.userDeletionIssue);
-    }
-}
-
 exports.getProfile = async (req, res) => {
     const { id } = req.params;
     try {
@@ -101,7 +91,7 @@ exports.getProfile = async (req, res) => {
     }
 }
 
-exports.logoutUser = async (req, res) => {
+exports.deleteUser = async (req, res) => {
     const { id } = req.params;
     try {
         const existingUser = await Users.query().where({ id: id }).first();
@@ -109,17 +99,16 @@ exports.logoutUser = async (req, res) => {
             res.status(404).send(errorMessage.userDoNotExist);
 
         const user = await Users.query().patchAndFetchById(id, {is_active: false});
-        res.status(200).json({ message: "Logged out successfully!", user });
+        res.status(200).json({ message: "User deleted successfully!", user });
     } catch (error) {
         res.status(400).send(errorMessage.logoutIssue);
     }
 }
 
 exports.logoutAdmin = async (req, res) => {
-    const { id } = req.user;
     try {
-        const user = await Users.query().patchAndFetchById(id, {is_active: false});
-        res.status(200).json({ message: "Admin Logged out successfully!", user });
+        // req.logout();
+        res.status(200).send("Admin Logged out successfully!");
     } catch (error) {
         res.status(400).send(errorMessage.logoutIssue);
     }
