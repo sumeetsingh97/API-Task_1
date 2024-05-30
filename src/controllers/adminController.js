@@ -57,22 +57,22 @@ exports.getUserById = async (req, res) => {
     }
 }
 
-exports.updateUserById = async (req, res) => {
-    const { name, email, role_id } = req.body;
-    const { id } = req.params;
+// CHECK THIS as admin should only update itself not the other users
+exports.updateAdminData = async (req, res) => {
+    const { name, email } = req.body;
+    const { id } = req.user;
     try {
         const existingUser = await Users.query().where({ id: id }).first();
         if(!existingUser)
-            res.status(404).send(errorMessage.userDoNotExist);
+            res.status(404).send(errorMessage.adminDoNotExist);
 
         const updateUser = {
             name,
-            email,
-            role_id
+            email
         };
         
         await Users.query().where({ id: id }).update(updateUser);
-        res.status(202).send("User updated successfully!");
+        res.status(202).send("Admin updated successfully!");
     } catch(error) {
         res.status(400).send(errorMessage.updationFailed);
     }

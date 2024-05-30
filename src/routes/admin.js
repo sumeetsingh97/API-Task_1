@@ -1,8 +1,9 @@
 const express = require('express');
 const passport = require('passport');
 require('../helpers/passport');
-const { login, getAllUsers, getUserById, updateUserById, deleteUser, getProfile, logoutAdmin } = require('../controllers/adminController');
-
+const { login, getAllUsers, getUserById, deleteUser, getProfile, logoutAdmin, updateAdminData } = require('../controllers/adminController');
+const { createProject, getAllProjects, updateProject, deleteProject } = require('../controllers/projectController');
+const { createTaskByAdmin, getTasksByProjectId, deleteTaskByAdmin } = require('../controllers/taskController');
 const validator = require('express-joi-validation').createValidator({
     passError: true,
 });
@@ -10,7 +11,7 @@ const { createRole, updateRole, deleteRole } = require('../controllers/roleContr
 const AdminRequestValidator = require('../middlewares/adminRequestValidator');
 
 const protect = require('../middlewares/protectAdmin');
-
+// const protectTask = require('../middlewares/protectTask');
 const router = express.Router();
 
 
@@ -32,11 +33,11 @@ router.get('/users/:id',
     getUserById
 );
 
-router.patch('/users/:id/update',
+router.patch('/admin/update',
     passport.authenticate('jwt', { session: false }),
-    validator.body(AdminRequestValidator.Validators('updateUserById')),
+    validator.body(AdminRequestValidator.Validators('updateAdminData')),
     protect,
-    updateUserById
+    updateAdminData
 );
 
 router.delete('/users/:id/delete',
@@ -75,6 +76,49 @@ router.post('/logout',
     passport.authenticate('jwt',  { session: false }),
     protect,
     logoutAdmin
-)
+);
+
+router.post('/projects/create',
+    passport.authenticate('jwt', { session: false }),
+    protect,
+    createProject
+);
+
+router.get('/projects',
+    passport.authenticate('jwt', { session: false }),
+    protect,
+    getAllProjects
+);
+
+router.patch('/projects/:id/update',
+    passport.authenticate('jwt', { session: false }),
+    protect,
+    updateProject
+);
+
+router.delete('/projects/:id/delete',
+    passport.authenticate('jwt', { session: false }),
+    protect,
+    deleteProject
+);
+
+router.post('/projects/:id/tasks/create',
+    validator.body(AdminRequestValidator.Validators('createTaskByAdmin')),
+    passport.authenticate('jwt', { session: false }),
+    protect,
+    createTaskByAdmin
+);
+
+router.get('/projects/:id/tasks',
+    passport.authenticate('jwt', { session: false }),
+    protect,
+    getTasksByProjectId
+);
+
+router.delete('/projects/tasks/:id/delete',
+    passport.authenticate('jwt', { session: false }),
+    protect,
+    deleteTaskByAdmin
+);
 
 module.exports = router;

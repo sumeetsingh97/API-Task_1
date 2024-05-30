@@ -10,11 +10,10 @@ module.exports.Validators = (method) => {
             };
             break;
 
-        case 'updateUserById':
+        case 'updateAdminData':
             obj = {
                 name: Joi.string().allow(null),
-                email: Joi.string().allow(null),
-                role_id: Joi.number().allow(null)
+                email: Joi.string().allow(null)
             };
             break;   
 
@@ -28,7 +27,34 @@ module.exports.Validators = (method) => {
             obj = {
                 name: Joi.string().allow(null),
             };
-            break;  
+            break; 
+            
+        case 'createProject':
+            obj = {
+                name: Joi.string().required(),
+                description: Joi.string().required(),
+                deadline: Joi.date().required(),
+                under_user: Joi.number().required()
+            };
+            break;
+
+        case 'updateProject':
+            obj = {
+                name: Joi.string().allow(null),
+                description: Joi.string().allow(null),
+                deadline: Joi.date().allow(null),
+                under_user: Joi.number().allow(null)
+            };
+            break;
+
+        case 'createTaskByAdmin':
+            obj = {
+                title: Joi.string().required(),
+                description: Joi.string().required(),
+                assigned_to: Joi.number().required(),
+                due_date: Joi.date().required()
+            };
+            break;
     }
     return Joi.object(obj);
 };

@@ -9,3 +9,16 @@
 
 -> login separately for the admin no user should be able to login
 -> is_active should remain false if user is deleted
+
+-> develop a backend for Project Management Tool with the API created so far
+-> projects and tasks table
+-> within project tasks will be assigned 
+-> projects will be assigned to the user on the basis of his role
+-> projects will be managed by admin and tasks by users  
+-> within task controller (create, update, delete, getTaskDetail, getTasksByProjectId)
+-> getTasksByProjectId should be allowed only to the admin and user for this a separate middleware must be created
+
+
+under_user(from Projects) will create task_create 
+and we can get under_user from project_id
+and project_id ?
