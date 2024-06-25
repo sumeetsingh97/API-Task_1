@@ -2,6 +2,7 @@ require('dotenv').config({ path: '../../.env' });
 const bcrypt = require('bcrypt');
 const Users = require('../models/userModel');
 const jwt = require('./../helpers/jwt');
+const { response, catchFailure } = require('../helpers/logger');
 require('../helpers/passport');
 // const jwt = require('jsonwebtoken');
 const errorMessage = require('../helpers/errorMessages');
@@ -11,17 +12,17 @@ exports.login = async (req, res) => {
     try {
         const existingUser = await Users.query().findOne({ email });
         if(!existingUser)
-            return res.status(400).send(errorMessage.invalidLogin);
+            throw new Error(errorMessage.invalidLogin);
 
         if (existingUser.role_id !== 1)
-            return res.status(400).send(errorMessage.forbidden);
+            throw new Error(errorMessage.forbidden);
 
         if(!existingUser.is_active)
-            return res.status(400).send(errorMessage.userIsBlocked);
+            throw new Error(errorMessage.userIsBlocked);
         
         const validUser = await bcrypt.compare(password, existingUser.password);
         if(!validUser) 
-            return res.status(400).send(errorMessage.passwordNotMatched);
+            throw new Error(errorMessage.passwordNotMatched);
         
         const token = await jwt.sign(
             {
@@ -29,19 +30,18 @@ exports.login = async (req, res) => {
                 role_id: existingUser.role_id
             }
         );
-        res.status(200).json({token});
-
+        return response(200, res, { message: "success", data: token });
     } catch (error) {
-        res.status(500).send(errorMessage.loginIssue);
+        return catchFailure(res, error);
     }
 }
 
 exports.getAllUsers = async (req, res) => {
     try {
         const user = await Users.query().where({is_active: true});
-        res.status(200).json(user);
+        return response(200, res, { message: "success", data: user });
     } catch (error) {
-        res.status(500).send(errorMessage.noUsers);
+        return catchFailure(res, error);
     }
 }
 
@@ -50,10 +50,10 @@ exports.getUserById = async (req, res) => {
     try {
         const user = await Users.query().findById(id);
         if(user && user.is_active){
-            res.status(202).json(user);
+            return response(200, res, { message: "success", data: user });
         }
     } catch (error) {
-        res.status(404).send(errorMessage.userDoNotExist);
+        return catchFailure(res, error);
     }
 }
 
@@ -64,7 +64,7 @@ exports.updateAdminData = async (req, res) => {
     try {
         const existingUser = await Users.query().where({ id: id }).first();
         if(!existingUser)
-            res.status(404).send(errorMessage.adminDoNotExist);
+            throw new Error(errorMessage.adminDoNotExist);
 
         const updateUser = {
             name,
@@ -72,9 +72,9 @@ exports.updateAdminData = async (req, res) => {
         };
         
         await Users.query().where({ id: id }).update(updateUser);
-        res.status(202).send("Admin updated successfully!");
+        return response(200, res, { message: "success", data: null });
     } catch(error) {
-        res.status(400).send(errorMessage.updationFailed);
+        return catchFailure(res, error);
     }
 }
 
@@ -83,11 +83,11 @@ exports.getProfile = async (req, res) => {
     try {
         const user = await Users.query().findById(id);
         if (!user) {
-            return res.status(404).send(errorMessage.noUsers);
+            throw new Error(errorMessage.noUsers);
         }
-        res.status(200).send(user);
+        return response(200, res, { message: "success", data: user });
     } catch (error) {
-        res.status(500).send(errorMessage.profileFetchingErr);
+        return catchFailure(res, error);
     }
 }
 
@@ -96,20 +96,20 @@ exports.deleteUser = async (req, res) => {
     try {
         const existingUser = await Users.query().where({ id: id }).first();
         if(!existingUser)
-            res.status(404).send(errorMessage.userDoNotExist);
+            throw new Error(errorMessage.userDoNotExist);
 
         const user = await Users.query().patchAndFetchById(id, {is_active: false});
-        res.status(200).json({ message: "User deleted successfully!", user });
+        return response(200, res, { message: "success", data: user });
     } catch (error) {
-        res.status(400).send(errorMessage.logoutIssue);
+        return catchFailure(res, error);
     }
 }
 
 exports.logoutAdmin = async (req, res) => {
     try {
         // req.logout();
-        res.status(200).send("Admin Logged out successfully!");
+        return response(200, res, { message: "success", data: null });
     } catch (error) {
-        res.status(400).send(errorMessage.logoutIssue);
+        return catchFailure(res, error);
     }
 }

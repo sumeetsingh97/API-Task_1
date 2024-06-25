@@ -1,5 +1,6 @@
 const Task = require('../models/taskModel');
 const errorMessage = require('../helpers/errorMessages');
+const { response, catchFailure } = require('../helpers/logger');
 
 exports.createTask = async (req, res) => {
     const project_id = req.project.id;
@@ -7,7 +8,7 @@ exports.createTask = async (req, res) => {
     try {
         const existingTask = await Task.query().where({ project_id: project_id });
         if(!existingTask) {
-            res.status(400).send(errorMessage.invalidTask);
+            throw new Error(errorMessage.invalidTask);
         }
 
         const newTask = await Task.query().insert(
@@ -19,9 +20,9 @@ exports.createTask = async (req, res) => {
                 due_date
             }
         );
-        res.status(201).json(newTask);
+        return response(201, res, { message: "success", data: newTask });
     } catch (error) {
-        res.status(501).send(errorMessage.taskCreationIssue);
+        return catchFailure(res, error);
     }
 }
 
@@ -33,7 +34,7 @@ exports.createTaskByAdmin = async (req, res) => {
     try {
         const existingTask = await Task.query().where({ project_id: id });
         if(!existingTask) {
-            res.status(400).send(errorMessage.invalidTask);
+            throw new Error(errorMessage.invalidTask);
         }
 
         const newTask = await Task.query().insert(
@@ -45,9 +46,9 @@ exports.createTaskByAdmin = async (req, res) => {
                 due_date
             }
         );
-        res.status(201).json(newTask);
+        return response(200, res, { message: "success", data: newTask });
     } catch (error) {
-        res.status(501).send(errorMessage.taskCreationIssue);
+        return catchFailure(res, error);
     }
 }
 
@@ -58,12 +59,12 @@ exports.getTaskDetails = async (req, res) => {
     try {
         const existingTask = await Task.query().where({ assigned_to: id });
         if(existingTask.length === 0) {
-            res.status(400).send(errorMessage.taskDoNotExist);
+            throw new Error(errorMessage.taskDoNotExist);
         }
 
-        return res.status(202).json(existingTask);
+        return response(202, res, { message: "success", data: existingTask });
     } catch (error) {
-        res.status(404).send(errorMessage.taskFetchingErr);
+        return catchFailure(res, error);
     }
 }
 
@@ -73,12 +74,12 @@ exports.showTasksByProjectId = async (req, res) => {
     try {
         const existingTask = await Task.query().where({ project_id: project_id });
         if(existingTask.length === 0) {
-            res.status(400).send(errorMessage.noTasks);
+            throw new Error(errorMessage.noTasks);
         } 
 
-        res.status(202).json(existingTask);
+        return response(202, res, { message: "success", data: existingTask });
     } catch (error) {
-        res.status(404).send(errorMessage.taskFetchingErr);
+        return catchFailure(res, error);
     }
 }
 
@@ -89,12 +90,12 @@ exports.getTasksByProjectId = async (req, res) => {
     try {
         const existingTask = await Task.query().where({ project_id: id });
         if(existingTask.length === 0) {
-            res.status(400).send(errorMessage.noTasks);
+            throw new Error(errorMessage.noTasks);
         } 
 
-        res.status(202).json(existingTask);
+        return response(202, res, { message: "success", data: existingTask });
     } catch (error) {
-        res.status(404).send(errorMessage.taskFetchingErr);
+        return catchFailure(res, error);
     }
 }
 
@@ -105,11 +106,11 @@ exports.updateTaskDetails = async (req, res) =>{
     try {
         const existingTask = await Task.query().where({ id: id });
         if(existingTask.length === 0) {
-            res.status(400).send(errorMessage.taskDoNotExist);
+            throw new Error(errorMessage.taskDoNotExist);
         }
 
         if(existingTask.project_id !== project_id) {
-            res.status(404).send(errorMessage.forbidden)
+            throw new Error(errorMessage.forbidden)
         }
 
         const updateTask = {
@@ -121,9 +122,9 @@ exports.updateTaskDetails = async (req, res) =>{
         };
 
         const updatedTask = await Task.query().where({ id: id, project_id: project_id }).update(updateTask)
-        res.status(201).send("Task details updated successfully !");
+        return response(200, res, { message: "success", data: updatedTask });
     } catch (error) {
-        res.status(404).send(errorMessage.taskUpdationIssue);
+        return catchFailure(res, error);
     }
 }
 
@@ -135,7 +136,7 @@ exports.updateTaskByUser = async (req, res) =>{
     try {
         const existingTask = await Task.query().where({ assigned_to: id });
         if(existingTask.length === 0) {
-            res.status(400).send(errorMessage.taskDoNotExist);
+            throw new Error(errorMessage.taskDoNotExist);
         }
 
         const updateTask = {
@@ -144,10 +145,10 @@ exports.updateTaskByUser = async (req, res) =>{
 
         const updatedTask = await Task.query().where({ assigned_to: id }).update(updateTask)
         if (updatedTask) {
-            res.status(201).send("Task status updated successfully !");
+            return response(200, res, { message: "success", data: updatedTask });
         }
     } catch (error) {
-        res.status(404).send(errorMessage.taskUpdationIssue);
+        return catchFailure(res, error);
     }
 }
 
@@ -158,32 +159,32 @@ exports.deleteTask = async (req, res) => {
     try {
         const existingTask = await Task.query().where({ id: id });
         if(existingTask.length === 0) {
-            res.status(400).send(errorMessage.taskDoNotExist);
+            throw new Error(errorMessage.taskDoNotExist);
         }
 
         if(existingTask.project_id !== project_id) {
-            res.status(404).send(errorMessage.forbidden)
+            throw new Error(errorMessage.forbidden)
         }
 
         await Task.query().where({ project_id: project_id }).deleteById(id);
-        res.status(200).send("Task deleted successfully!");
+        return response(200, res, { message: "success", data: null });
     } catch (error) {
-        res.status(400).send(errorMessage.taskDeletionIssue);
+        return catchFailure(res, error);
     }
 }
 
-// admin
+// only admin should do this
 exports.deleteTaskByAdmin = async (req, res) => {
     const {id} = req.params;
     try {
         const existingTask = await Task.query().where({ id: id });
         if(existingTask.length === 0) {
-            res.status(400).send(errorMessage.taskDoNotExist);
+            throw new Error(errorMessage.taskDoNotExist);
         }
 
         await Task.query().deleteById(id);
-        res.status(200).send("Task deleted successfully!");
+        return response(200, res, { message: "success", data: null });
     } catch (error) {
-        res.status(400).send(errorMessage.taskDeletionIssue);
+        return catchFailure(res, error);
     }
 }

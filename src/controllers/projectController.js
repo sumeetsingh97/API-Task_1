@@ -1,12 +1,13 @@
 const Project = require('../models/projectModel');
 const errorMessage = require('../helpers/errorMessages');
+const { response, catchFailure } = require('../helpers/logger');
 
 exports.createProject = async (req, res) => {
     const { name, description, deadline, under_user } = req.body;
     try {
         const existingProject = await Project.query().where({ name });
         if(!existingProject) {
-            res.status(400).send(errorMessage.invalidProject);
+            throw new Error(errorMessage.invalidProject);
         }
 
         const newProject = await Project.query().insert(
@@ -17,9 +18,9 @@ exports.createProject = async (req, res) => {
                 under_user
             }
         );
-        res.status(201).json(newProject);
+        return response(200, res, { message: "success", data: newProject });
     } catch (error) {
-        res.status(501).send(errorMessage.projectCreationIssue);
+        return catchFailure(res, error);
     }
 }
 
@@ -28,12 +29,12 @@ exports.getProjectDetails = async (req, res) => {
     try {
         const existingProject = await Project.query().where({ under_user: id });
         if(!existingProject) {
-            res.status(400).send(errorMessage.projectDoNotExist);
+            throw new Error(errorMessage.projectDoNotExist);
         } 
 
-        res.status(202).json(existingProject);
+        return response(200, res, { message: "success", data: existingProject });
     } catch (error) {
-        res.status(404).send(errorMessage.projectFetchingErr);
+        return catchFailure(res, error);
     }
 }
 
@@ -42,12 +43,12 @@ exports.getAllProjects = async (req, res) => {
     try {
         const existingProject = await Project.query();
         if(!existingProject) {
-            res.status(400).send(errorMessage.noProjects);
+            throw new Error(errorMessage.noProjects);
         } 
 
-        res.status(202).json(existingProject);
+        return response(200, res, { message: "success", data: existingProject });
     } catch (error) {
-        res.status(404).send(errorMessage.projectsFetchingErr);
+        return catchFailure(res, error);
     }
 }
 
@@ -57,7 +58,7 @@ exports.updateProject = async (req, res) => {
     try {
         const existingProject = await Project.query().where({ id: id });
         if(!existingProject) {
-            res.status(400).send(errorMessage.projectDoNotExist);
+            throw new Error(errorMessage.projectDoNotExist);
         }
 
         const updateProject = {
@@ -68,9 +69,9 @@ exports.updateProject = async (req, res) => {
         };
 
         const updatedProject = await Project.query().where({ id: id }).update(updateProject)
-        res.status(201).send("Project updated successfully !");
+        return response(200, res, { message: "success", data: updatedProject });
     } catch (error) {
-        res.status(404).send(errorMessage.projectUpdationIssue);
+        return catchFailure(res, error);
     }
 }
 
@@ -79,12 +80,12 @@ exports.deleteProject = async (req, res) => {
     try {
         const existingProject = await Project.query().where({ id: id });
         if(!existingProject) {
-            res.status(400).send(errorMessage.projectDoNotExist);
+            throw new Error(errorMessage.projectDoNotExist);
         }
 
         await Project.query().deleteById(id);
-        res.status(200).send("Project deleted successfully!");
+        return response(200, res, { message: "success", data: null });
     } catch (error) {
-        res.status(400).send(errorMessage.projectDeletionIssue);
+        return catchFailure(res, error);
     }
 }

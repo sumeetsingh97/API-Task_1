@@ -1,5 +1,6 @@
 const Roles = require('./../models/roleModel');
 const errorMessage = require('../helpers/errorMessages');
+const { response, catchFailure } = require('../helpers/logger');
 
 exports.createRole = async (req, res) => {
     const { name } = req.body;
@@ -10,13 +11,13 @@ exports.createRole = async (req, res) => {
     try {
         const existingRole = await Roles.query().findOne({name});
         if(existingRole) {
-            res.status(400).send(errorMessage.invalidRole);
+            throw new Error(errorMessage.invalidRole);
         }
 
         const newRole = await Roles.query().insert({ name: name });
-        res.status(202).json(newRole);
+        return response(200, res, { message: "success", data: newRole });
     } catch (error) {
-        res.status(501).send(errorMessage.roleCreationIssue);
+        return catchFailure(res, error);
     }
 }; 
 
@@ -26,16 +27,16 @@ exports.updateRole = async (req, res) => {
     try {
         const existingRole = await Roles.query().where({ id: id }).first();
         if(!existingRole)
-            res.status(404).send(errorMessage.whileUpdatingRole);
+            throw new Error(errorMessage.whileUpdatingRole);
 
         const updateRole = {
             name
         };
         
         const updatedRole = await Roles.query().where({ id: id }).update(updateRole);
-        res.status(202).send("Role updated successfully !");
+        return response(200, res, { message: "success", data: updatedRole });;
     } catch(error) {
-        res.status(400).send(errorMessage.roleUpdationIssue);
+        return catchFailure(res, error);
     }
 };
 
@@ -45,11 +46,11 @@ exports.deleteRole = async (req, res) => {
         
         const existingRole = await Roles.query().where({ id: id }).first();
         if(!existingRole)
-            res.status(404).send(errorMessage.whileUpdatingRole);
+            throw new Error(errorMessage.whileUpdatingRole);
 
         await Roles.query().deleteById(id);
-        res.status(200).send("Role deleted successfully !");
+        return response(200, res, { message: "success", data: null });
     } catch (error) {
-        res.status(400).send(errorMessage.roleDeletionIssue);
+        return catchFailure(res, error);
     }
 };
