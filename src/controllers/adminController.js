@@ -1,6 +1,10 @@
 require('dotenv').config({ path: '../../.env' });
 const bcrypt = require('bcrypt');
 const Users = require('../models/userModel');
+const Roles = require('./../models/roleModel');
+const Project = require('../models/projectModel');
+const Task = require('../models/taskModel');
+
 const jwt = require('./../helpers/jwt');
 const { response, catchFailure } = require('../helpers/logger');
 require('../helpers/passport');
@@ -38,8 +42,35 @@ exports.login = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
     try {
-        const user = await Users.query().where({is_active: true});
-        return response(200, res, { message: "success", data: user });
+        const page = req.query.page || 1;
+        const limit = req.query.limit || 8;
+        
+        if (page < 1) page = 1;
+        let offset = (page - 1) * limit;
+        const user = await Users.query()
+        .select(
+            'users.id as user_id',
+            'users.name as user_name',
+            'users.email as user_email',
+            'users.is_active as user_is_active',
+            'roles.name as role_name',
+            'projects.id as project_id',
+            'projects.name as project_name',
+            'projects.deadline as project_deadline',
+            'tasks.id as task_id',
+            'tasks.title as task_title',
+            'tasks.status as task_status',
+            'tasks.due_date as task_due_date'
+        )
+        .leftJoin(`roles`, `users.role_id`, `roles.id`)
+        .leftJoin(`projects`, `users.id`, `projects.under_user`)
+        .leftJoin(`tasks`, `users.id`, `tasks.assigned_to`)
+        .leftJoin(`tasks as user_tasks`, `projects.id`, `user_tasks.project_id`)
+        .where({is_active: true})
+        .offset(offset)
+        .limit(limit).orderBy(`users.id`);
+        const total = await Users.query().resultSize();
+        return response(200, res, { message: "success", data: { user: user, page: page, limit: limit,  total: total } });
     } catch (error) {
         return catchFailure(res, error);
     }
